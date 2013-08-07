@@ -8,10 +8,7 @@
 #ifndef ROWEXTRACTORNODE_H_
 #define ROWEXTRACTORNODE_H_
 
-#include <math.h>
 #include <string.h>
-#include <stdlib.h>
-#include <time.h>
 
 #include <ros/ros.h>
 #include <sensor_msgs/LaserScan.h>
@@ -26,7 +23,9 @@
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 
-typedef pcl::PointXYZI PointT;
+#include "RowExtractor.h"
+
+using namespace RowExtractor;
 
 class RowExtractorNode
 {
@@ -34,19 +33,18 @@ class RowExtractorNode
 	ros::NodeHandle nodeHandler;
 	int loopRate;
 
-	//	Laser scan --> Point cloud
+	//	Laser scan --> Point cloud and debug stuff
 	tf::TransformListener tfListener;
 	laser_geometry::LaserProjection laserProjection;
-
-	//	Debug
-	bool debugActive;
+	sensor_msgs::PointCloud2 pointCloudMsg;
+	pcl::PointCloud<PointT> rawPointCloud;
+	visualization_msgs::Marker marker;
 	ros::Publisher pointCloudPublisher;
 	ros::Publisher markerPublisher;
 
 	//	System input
 	struct
 	{
-		pcl::PointCloud<PointT> pointCloud;
 		std::string scanTopic;
 		std::string scanLink;
 		ros::Subscriber scanSubscribe;
@@ -60,16 +58,14 @@ class RowExtractorNode
 		ros::Publisher rowPublisher;
 	} output;
 
+	//	Row extractor
+	RowExtractor rowExtractor;
+	Input reInput;
+	Output reOutput;
+	Parameters reParameters;
+
 	//	Callback
 	void laserScanCallback(const sensor_msgs::LaserScan::ConstPtr& data);
-
-	//	Processed data
-	visualization_msgs::Marker marker;
-	pcl::PointCloud<PointT> preProcessedCloud;
-
-	//	Processors
-	void preProcess (void);
-	void ransac (void);
 
 public:
 	RowExtractorNode();

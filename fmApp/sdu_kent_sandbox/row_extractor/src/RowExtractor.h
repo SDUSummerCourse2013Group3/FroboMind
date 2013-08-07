@@ -8,23 +8,16 @@
 #ifndef ROWEXTRACTOR_H_
 #define ROWEXTRACTOR_H_
 
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
+
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-typedef pcl::PointXYZI PointT;
-
-class RowExtractor
+namespace RowExtractor
 {
-public:
-	RowExtractor();
-	virtual ~RowExtractor();
-
-	void update (void);
-
-	void getParameters (void);
-	void setParameters (void);
-
-
+	typedef pcl::PointXYZI PointT;
 
 	struct Parameters
 	{
@@ -51,23 +44,41 @@ public:
 
 	struct Input
 	{
-		pcl::PointCloud pointCLoud;
+		pcl::PointCloud<PointT> pointCloud;
 	};
 
 	struct Output
 	{
+		double length;
 		double orientation;
 	};
 
-private:
-	Input input;
-	Output output;
-	Parameters systemParameters;
+	class RowExtractor
+	{
+	public:
+		RowExtractor();
+		RowExtractor(Parameters par);
+		virtual ~RowExtractor();
 
-	//	Processors
-	void preProcess (void);
-	void segmentationProcess (void);
-	void ransacProcess (void);
-};
+		Parameters getParameters (void);
+		void setParameters (Parameters par);
+
+		Output update (Input in);
+
+	private:
+		Input input;
+		Output output;
+		Parameters systemParameters;
+
+		//	Processed data
+		pcl::PointCloud<PointT> preProcessedData;
+		pcl::PointCloud<PointT> segmentedData;
+
+		//	Processors
+		void preProcess (void);
+		void segmentationProcess (void);
+		void ransacProcess (void);
+	};
+}
 
 #endif /* ROWEXTRACTOR_H_ */
