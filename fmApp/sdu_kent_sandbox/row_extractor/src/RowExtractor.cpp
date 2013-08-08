@@ -7,7 +7,7 @@
 
 #include "RowExtractor.h"
 
-RowExtractor::RowExtractor::RowExtractor()
+Extractors::RowExtractor::RowExtractor()
 {
 	//	Setup default parameters
 	//	Pre-Processor
@@ -31,7 +31,7 @@ RowExtractor::RowExtractor::RowExtractor()
 	this->output.orientation = 0.0;
 }
 
-RowExtractor::RowExtractor::RowExtractor(Parameters par)
+Extractors::RowExtractor::RowExtractor(Parameters par)
 {
 	//	Setup default parameters
 	this->systemParameters = par;
@@ -43,22 +43,22 @@ RowExtractor::RowExtractor::RowExtractor(Parameters par)
 	this->output.orientation = 0.0;
 }
 
-RowExtractor::RowExtractor::~RowExtractor()
+Extractors::RowExtractor::~RowExtractor()
 {
 	// TODO Auto-generated destructor stub
 }
 
-RowExtractor::Parameters RowExtractor::RowExtractor::getParameters (void)
+Extractors::Parameters Extractors::RowExtractor::getParameters (void)
 {
-	return 0;
+	return this->systemParameters;
 }
 
-void RowExtractor::RowExtractor::setParameters (Parameters par)
+void Extractors::RowExtractor::setParameters (Parameters par)
 {
-
+	this->systemParameters = par;
 }
 
-RowExtractor::Output RowExtractor::RowExtractor::update (Input in)
+Extractors::Output Extractors::RowExtractor::update (Input in)
 {
 	this->input = in;
 
@@ -68,7 +68,7 @@ RowExtractor::Output RowExtractor::RowExtractor::update (Input in)
 	return this->output;
 }
 
-void RowExtractor::RowExtractor::preProcess (void)
+void Extractors::RowExtractor::preProcess (void)
 {
 	//	Cope data from input cloud to pre-processed cloud
 	this->preProcessedData = this->input.pointCloud;
@@ -96,12 +96,12 @@ void RowExtractor::RowExtractor::preProcess (void)
 	}
 }
 
-void RowExtractor::RowExtractor::segmentationProcess (void)
+void Extractors::RowExtractor::segmentationProcess (void)
 {
 
 }
 
-void RowExtractor::RowExtractor::ransacProcess (void)
+void Extractors::RowExtractor::ransacProcess (void)
 {
 	//	Seed randomizer
 	srand(time(0));
@@ -190,7 +190,9 @@ void RowExtractor::RowExtractor::ransacProcess (void)
 	}
 	else
 	{
-		this->output.length = 1 / 0;
-		this->output.orientation = 1 / 0;
+		double nan = std::numeric_limits<double>::quiet_NaN();
+
+		this->output.length = nan;
+		this->output.orientation = nan;
 	}
 }

@@ -11,11 +11,12 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <limits>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace RowExtractor
+namespace Extractors
 {
 	typedef pcl::PointXYZI PointT;
 

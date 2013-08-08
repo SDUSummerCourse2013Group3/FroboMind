@@ -25,7 +25,7 @@
 
 #include "RowExtractor.h"
 
-using namespace RowExtractor;
+using namespace Extractors;
 
 class RowExtractorNode
 {

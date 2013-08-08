@@ -17,10 +17,10 @@ int main (int argc, char** argv)
 	return 0;
 }
 
-RowExtractorNode::RowExtractorNode()
+RowExtractorNode::RowExtractorNode() : nodeHandler("~")
 {
 	//	ROS node handler stuff
-	this->nodeHandler = ros::NodeHandle("~");
+	//this->nodeHandler = ros::NodeHandle("~");
 	this->nodeHandler.param<int>("loopRate", this->loopRate, 100);
 
 	//	Setup laser scanner --> point cloud stuff
@@ -28,6 +28,15 @@ RowExtractorNode::RowExtractorNode()
 
 	//	Setup debug publisher
 	this->pointCloudPublisher = this->nodeHandler.advertise<sensor_msgs::PointCloud2>("pointCloudTest", 10);
+
+	//  Setup system output
+	this->nodeHandler.param<std::string>("rowTopic", this->output.rowTopic, "rowTopic");
+	this->output.rowPublisher = this->nodeHandler.advertise<msgs::row>(this->output.rowTopic, 10);
+
+	//	Setup system input
+	this->nodeHandler.param<std::string>("scanTopic", this->input.scanTopic, "/fmSensors/laser_msg");
+	this->nodeHandler.param<std::string>("scanLink", this->input.scanLink, "/laser_link");
+	this->input.scanSubscribe = this->nodeHandler.subscribe<sensor_msgs::LaserScan>(this->input.scanTopic, 10, &RowExtractorNode::laserScanCallback, this);
 
 	//	Setup marker
 	this->marker.header.frame_id = this->input.scanLink;
@@ -42,15 +51,6 @@ RowExtractorNode::RowExtractorNode()
 	this->marker.color.a = 0.8;
 
 	this->markerPublisher = this->nodeHandler.advertise<visualization_msgs::Marker>("line_marker_pub", 10);
-
-	// Setup system output
-	this->nodeHandler.param<std::string>("rowTopic", this->output.rowTopic, "rowTopic");
-	this->output.rowPublisher = this->nodeHandler.advertise<msgs::row>(this->output.rowTopic, 10);
-
-	//	Setup system input
-	this->nodeHandler.param<std::string>("scanTopic", this->input.scanTopic, "/fmSensors/laser_msg");
-	this->nodeHandler.param<std::string>("scanLink", this->input.scanLink, "/laser_link");
-	this->input.scanSubscribe = this->nodeHandler.subscribe<sensor_msgs::LaserScan>(this->input.scanTopic, 10, &RowExtractorNode::laserScanCallback, this);
 
 	//	Setup row extractor
 	//	Preprocessor
@@ -68,7 +68,7 @@ RowExtractorNode::RowExtractorNode()
 	this->nodeHandler.param<double>("rowExtractor/ransac/distanceFromLineThreshold", this->reParameters.ransacProcessor.distanceFromLineThreshold, 0.2);
 
 	//	Instantiate row extractor with parameters
-	this->rowExtractor = RowExtractor::RowExtractor(this->reParameters);
+	this->rowExtractor = RowExtractor(this->reParameters);
 
 	//	Setup row extractor input (empty)
 	this->reInput.pointCloud = pcl::PointCloud<PointT>();

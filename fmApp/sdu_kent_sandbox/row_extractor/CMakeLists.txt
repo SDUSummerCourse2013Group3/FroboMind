@@ -81,7 +81,7 @@ include_directories(include
 # )
 
 ## Declare a cpp executable
-add_executable(row_extractor_node src/RowExtractorNode.cpp)
+add_executable(row_extractor_node src/RowExtractorNode.cpp src/RowExtractor.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
