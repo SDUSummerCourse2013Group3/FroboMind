@@ -8,17 +8,32 @@
 #ifndef ROWEXTRACTOR_H_
 #define ROWEXTRACTOR_H_
 
+#include <stdio.h>
+
+#include <limits>
+#include <list>
+#include <vector>
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
-#include <limits>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <Eigen/Core>
+
 namespace Extractors
 {
 	typedef pcl::PointXYZI PointT;
+	typedef Eigen::MatrixXd CovarianceMatrix;
+
+	struct Row
+	{
+		PointT pointInRow;
+		double orientation;
+		double lengthToRow;
+		CovarianceMatrix covariance;
+	};
 
 	struct Parameters
 	{
@@ -31,20 +46,19 @@ namespace Extractors
 
 		struct
 		{
-			bool active;
-			double segmentationDistance;
-		} segmentationProcessor;
-
-		struct
-		{
 			int numberOfRansacTries;
 			int numberOfPointsToAcceptLine;
 			double distanceFromLineThreshold;
+			double minimumRowLength;
 		} ransacProcessor;
+
+		double timeLimit;	//	[ms]
 	};
 
 	struct Input
 	{
+		uint32_t time_sec;
+		uint32_t time_nsec;
 		pcl::PointCloud<PointT> pointCloud;
 	};
 
@@ -52,6 +66,11 @@ namespace Extractors
 	{
 		double length;
 		double orientation;
+		PointT center;
+
+		bool rowFound;
+		std::vector<Row> rows;
+		CovarianceMatrix cumulativeCovariance;
 	};
 
 	class RowExtractor
@@ -64,6 +83,10 @@ namespace Extractors
 		Parameters getParameters (void);
 		void setParameters (Parameters par);
 
+		pcl::PointCloud<PointT> getPreProcessedCloud (void);
+
+		Output oldUpdate (Input in);
+
 		Output update (Input in);
 
 	private:
@@ -73,12 +96,15 @@ namespace Extractors
 
 		//	Processed data
 		pcl::PointCloud<PointT> preProcessedData;
-		pcl::PointCloud<PointT> segmentedData;
 
 		//	Processors
-		void preProcess (void);
-		void segmentationProcess (void);
-		void ransacProcess (void);
+		void oldPreProcess (void);
+		void oldRansacProcess (void);
+
+		void preProcessor (void);
+		void rowProcessor (PointT point, double orientation);
+		void ransacProcessor (void);
+		void ransacProcessor2 (void);
 	};
 }
 

@@ -32,12 +32,14 @@ class RowExtractorNode
 	//	Node handler
 	ros::NodeHandle nodeHandler;
 	int loopRate;
+	bool debug;
+	bool synchronous;
 
 	//	Laser scan --> Point cloud and debug stuff
 	tf::TransformListener tfListener;
 	laser_geometry::LaserProjection laserProjection;
 	sensor_msgs::PointCloud2 pointCloudMsg;
-	pcl::PointCloud<PointT> rawPointCloud;
+	//pcl::PointCloud<PointT> rawPointCloud;
 	visualization_msgs::Marker marker;
 	ros::Publisher pointCloudPublisher;
 	ros::Publisher markerPublisher;
@@ -66,6 +68,8 @@ class RowExtractorNode
 
 	//	Callback
 	void laserScanCallback(const sensor_msgs::LaserScan::ConstPtr& data);
+
+	void updateDebugMarker (void);
 
 public:
 	RowExtractorNode();

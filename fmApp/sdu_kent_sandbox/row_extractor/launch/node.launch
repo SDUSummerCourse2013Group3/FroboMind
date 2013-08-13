@@ -1,0 +1,22 @@
+<launch>
+	<node name="RowExtractorNode" pkg="row_extractor" type="row_extractor_node" output="screen">
+		<param name="loopRate" value="100" />
+		<param name="debug" value="true" />
+		<param name="synchronous" value="false" />
+		
+		<param name="rowTopic" value="row_msg" />
+		<param name="scanTopic" value="/fmSensors/laser_msg" />
+		<param name="scanLink" value="/laser_link" />
+	
+		<param name="timeLimit" value="1000" />
+	
+		<param name="preprocessor/active" value="true" />
+		<param name="preprocessor/minimumClearZoneDistance" value="0.5" />
+		<param name="preprocessor/maximumClearZoneDistance" value="5" />
+		
+		<param name="ransac/numberOfRansacTries" value="20" />
+		<param name="ransac/numberOfPointsToAcceptLine" value="50" />
+		<param name="ransac/distanceFromLineThreshold" value="0.2" />
+		<param name="ransac/minumumRowLength" value="0.5" />
+	</node>
+</launch>

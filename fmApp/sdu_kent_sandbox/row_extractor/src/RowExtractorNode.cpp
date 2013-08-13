@@ -9,7 +9,7 @@
 
 int main (int argc, char** argv)
 {
-	ros::init(argc, argv, "RowExtractorNode");
+	ros::init(argc, argv, "rowExtractor");
 
 	RowExtractorNode rowNode;
 	rowNode.makeItSpin();
@@ -20,14 +20,12 @@ int main (int argc, char** argv)
 RowExtractorNode::RowExtractorNode() : nodeHandler("~")
 {
 	//	ROS node handler stuff
-	//this->nodeHandler = ros::NodeHandle("~");
 	this->nodeHandler.param<int>("loopRate", this->loopRate, 100);
+	this->nodeHandler.param<bool>("debug", this->debug, true);
+	this->nodeHandler.param<bool>("synchronous", this->synchronous, false);
 
 	//	Setup laser scanner --> point cloud stuff
 	this->tfListener.setExtrapolationLimit(ros::Duration(0.1));
-
-	//	Setup debug publisher
-	this->pointCloudPublisher = this->nodeHandler.advertise<sensor_msgs::PointCloud2>("pointCloudTest", 10);
 
 	//  Setup system output
 	this->nodeHandler.param<std::string>("rowTopic", this->output.rowTopic, "rowTopic");
@@ -38,7 +36,11 @@ RowExtractorNode::RowExtractorNode() : nodeHandler("~")
 	this->nodeHandler.param<std::string>("scanLink", this->input.scanLink, "/laser_link");
 	this->input.scanSubscribe = this->nodeHandler.subscribe<sensor_msgs::LaserScan>(this->input.scanTopic, 10, &RowExtractorNode::laserScanCallback, this);
 
-	//	Setup marker
+	//	Setup debugging stuff
+	//	Cloud publisher
+	this->pointCloudPublisher = this->nodeHandler.advertise<sensor_msgs::PointCloud2>("pointCloudTest", 10);
+
+	//	Marker
 	this->marker.header.frame_id = this->input.scanLink;
 	this->marker.ns = "RowExtractorMarker";
 	this->marker.id = 0;
@@ -53,24 +55,25 @@ RowExtractorNode::RowExtractorNode() : nodeHandler("~")
 	this->markerPublisher = this->nodeHandler.advertise<visualization_msgs::Marker>("line_marker_pub", 10);
 
 	//	Setup row extractor
-	//	Preprocessor
-	this->nodeHandler.param<bool>("rowExtractor/preprocessor/active", this->reParameters.preProcessor.active, true);
-	this->nodeHandler.param<double>("rowExtractor/preprocessor/minimumClearZoneDistance", this->reParameters.preProcessor.minimumClearZoneDistance, .2);
-	this->nodeHandler.param<double>("rowExtractor/preprocessor/maximumClearZoneDistance", this->reParameters.preProcessor.maximumClearZoneDistance, 5.0);
+	this->nodeHandler.param<double>("timeLimit", this->reParameters.timeLimit, 1000);
 
-	//	Segmentation
-	this->reParameters.segmentationProcessor.active = false;
-	this->reParameters.segmentationProcessor.segmentationDistance = 0.0;
+	//	Preprocessor
+	this->nodeHandler.param<bool>("preprocessor/active", this->reParameters.preProcessor.active, true);
+	this->nodeHandler.param<double>("preprocessor/minimumClearZoneDistance", this->reParameters.preProcessor.minimumClearZoneDistance, .2);
+	this->nodeHandler.param<double>("preprocessor/maximumClearZoneDistance", this->reParameters.preProcessor.maximumClearZoneDistance, 5.0);
 
 	//	Ransac
-	this->nodeHandler.param<int>("rowExtractor/ransac/numberOfRansacTries", this->reParameters.ransacProcessor.numberOfRansacTries, 20);
-	this->nodeHandler.param<int>("rowExtractor/ransac/numberOfPointsToAcceptLine", this->reParameters.ransacProcessor.numberOfPointsToAcceptLine, 50);
-	this->nodeHandler.param<double>("rowExtractor/ransac/distanceFromLineThreshold", this->reParameters.ransacProcessor.distanceFromLineThreshold, 0.2);
+	this->nodeHandler.param<int>("ransac/numberOfRansacTries", this->reParameters.ransacProcessor.numberOfRansacTries, 20);
+	this->nodeHandler.param<int>("ransac/numberOfPointsToAcceptLine", this->reParameters.ransacProcessor.numberOfPointsToAcceptLine, 50);
+	this->nodeHandler.param<double>("ransac/distanceFromLineThreshold", this->reParameters.ransacProcessor.distanceFromLineThreshold, 0.2);
+	this->nodeHandler.param<double>("ransac/minimumRowLength", this->reParameters.ransacProcessor.minimumRowLength, 1.2);
 
 	//	Instantiate row extractor with parameters
 	this->rowExtractor = RowExtractor(this->reParameters);
 
 	//	Setup row extractor input (empty)
+	this->reInput.time_sec = 0;
+	this->reInput.time_nsec = 0;
 	this->reInput.pointCloud = pcl::PointCloud<PointT>();
 
 	//	Setup row extractor output (empty)
@@ -92,15 +95,27 @@ void RowExtractorNode::makeItSpin()
 		//	Update event que
 		ros::spinOnce();
 
-		//	Update
-		this->reOutput = this->rowExtractor.update(this->reInput);
+		//	Update (if asynchronous behavior have been selected)
+		if (!this->synchronous)
+		{
+			//this->reOutput = this->rowExtractor.oldUpdate(this->reInput);
+			this->reOutput = this->rowExtractor.update(this->reInput);
+		}
 
-		//	Publish debug cloud
-		this->pointCloudPublisher.publish(this->pointCloudMsg);
 
-		//	Publish debug marker
-		this->marker.header.stamp = ros::Time::now();
-		this->markerPublisher.publish(this->marker);
+		if (this->debug)
+		{
+			//	Publish raw cloud
+			this->pointCloudPublisher.publish(this->pointCloudMsg);
+
+			//	Publish debug marker
+			this->updateDebugMarker();
+			this->marker.header.stamp = ros::Time::now();
+			this->markerPublisher.publish(this->marker);
+		}
+
+		//	Setup row output
+		//	Extract info from vector<row>
 
 		//	Publish row data
 		this->output.rowPublisher.publish(this->output.rowMessage);
@@ -115,12 +130,46 @@ void RowExtractorNode::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr&
 	//	Transform laser scan to point cloud in the scanners own frame
 	try
 	{
-		this->laserProjection.transformLaserScanToPointCloud(this->input.scanLink, *data, pointCloudMsg, this->tfListener);
+		this->reInput.time_sec = data.get()->header.stamp.sec;
+		this->reInput.time_nsec = data.get()->header.stamp.nsec;
 
-		pcl::fromROSMsg(pointCloudMsg, this->rawPointCloud);
+		this->laserProjection.transformLaserScanToPointCloud(this->input.scanLink, *data, this->pointCloudMsg, this->tfListener);
+
+		pcl::fromROSMsg(this->pointCloudMsg, this->reInput.pointCloud);
+
+		if (this->synchronous)
+		{
+			//this->reOutput = this->rowExtractor.oldUpdate(this->reInput);
+			this->reOutput = this->rowExtractor.update(this->reInput);
+		}
+
 	}
 	catch (tf::TransformException& e)
 	{
 		ROS_ERROR("TF Listener threw: %s", e.what());
+	}
+}
+
+void RowExtractorNode::updateDebugMarker (void)
+{
+	if (this->reOutput.rowFound)
+	{
+		this->marker.pose.position.x = this->reOutput.center.x;
+		this->marker.pose.position.y = this->reOutput.center.y;
+
+		this->marker.pose.orientation = tf::createQuaternionMsgFromYaw(this->reOutput.orientation);
+
+		this->marker.scale.x = this->reOutput.length;
+		this->marker.scale.y = 2 * this->reParameters.ransacProcessor.distanceFromLineThreshold;
+	}
+	else
+	{
+		this->marker.pose.position.x = 0.0;
+		this->marker.pose.position.y = 0.0;
+
+		this->marker.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
+
+		this->marker.scale.x = 0.0;
+		this->marker.scale.y = 0.0;
 	}
 }
