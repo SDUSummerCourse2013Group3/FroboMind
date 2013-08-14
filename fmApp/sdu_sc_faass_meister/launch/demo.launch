@@ -153,7 +153,7 @@
 		<node pkg="serial_string" type="serial_string_node" name="serial_comm_left" output="screen">
 			<param name="publisher_topic" value="/fmData/serial_comm_left_rx" />
 			<param name="subscriber_topic" value="/fmData/serial_comm_left_tx" />
-			<param name="device" value="/dev/left_belt" />
+			<param name="device" value="/dev/ttyS0" />
 			<param name="baudrate" value="115200" />
 			<param name="termination_character" value="13" />
 		</node>
@@ -161,7 +161,7 @@
 		<node pkg="serial_string" type="serial_string_node" name="serial_comm_right" output="screen">
 			<param name="publisher_topic" value="/fmData/serial_comm_right_rx" />
 			<param name="subscriber_topic" value="/fmData/serial_comm_right_tx" />
-			<param name="device" value="/dev/right_belt" />
+			<param name="device" value="/dev/ttyS1" />
 			<param name="baudrate" value="115200" />
 			<param name="termination_character" value="13" />
 		</node>
@@ -169,7 +169,7 @@
 		<node pkg="serial_string" type="serial_string_node" name="serial_comm_imu" output="screen">
 			<param name="publisher_topic" value="/fmData/imu_rx" />
 			<param name="subscriber_topic" value="/fmData/imu_tx" />
-			<param name="device" value="/dev/imu" />
+			<param name="device" value="/dev/ttyUSB0" />
 			<param name="baudrate" value="115200" />
 			<param name="termination_character" value="10" />
 		</node>
