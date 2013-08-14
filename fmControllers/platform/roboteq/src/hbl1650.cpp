@@ -13,8 +13,8 @@ hbl1650::hbl1650( )
 	ch1.transmit_cb = new CallbackHandler<hbl1650>(this,&hbl1650::transmit);
 	ch1.init_cb = new CallbackHandler<hbl1650>(this,&hbl1650::initController);
 
-	//Motor controller constant open loop max outputmax_output
-	ch1.roboteq_max = 1000;
+
+	ch1.roboteq_max = 1000; //Motor controller constant open loop max outputmax_output
 
 	// Initialise status
 	status.cmd_vel_publishing = status.deadman_pressed = status.initialised = status.online = status.responding = false;
@@ -23,8 +23,7 @@ hbl1650::hbl1650( )
 	// Declare variables for parsing parameters
 	double max_time_diff_input;
 	std::string cmd_vel_ch1_topic, cmd_vel_ch2_topic, serial_tx_topic, serial_rx_topic, command_relay_topic, deadman_topic,
-	encoder_ch1_topic, encoder_ch2_topic, power_ch1_topic, power_ch2_topic, status_topic, temperature_topic,velocity_topic,
-	propulsion_module_status_topic, propulsion_module_feedback_topic;
+	encoder_ch1_topic, encoder_ch2_topic, power_ch1_topic, power_ch2_topic, status_topic, temperature_topic,velocity_topic;
 
 	// Parse from parameter server
 	local_node_handler.param<std::string>("cmd_vel_ch1_topic", cmd_vel_ch1_topic, "/fmActuators/cmd_vel_ch1");
@@ -37,15 +36,13 @@ hbl1650::hbl1650( )
 	local_node_handler.param<std::string>("status_topic", status_topic, "/fmActuators/status");
 	local_node_handler.param<std::string>("temperature_topic", temperature_topic, "/fmActuators/temperature");
 	local_node_handler.param<std::string>("velocity_topic", velocity_topic, "/fmActuators/velocity");
-	local_node_handler.param<std::string>("propulsion_module_status_topic", propulsion_module_status_topic, "/fmInformation/propulsion_module_status");
-	local_node_handler.param<std::string>("propulsion_module_feedback_topic", propulsion_module_feedback_topic, "/fmInformation/propulsion_module_feedback");
-
 	ch1.roboteq_max = 1000; //Motor controller constant open loop max outputmax_output
 	// Init channel parameters
 	local_node_handler.param<double>("p_gain", ch1.p_gain, 1);
 	local_node_handler.param<double>("i_gain", ch1.i_gain, 0);
 	local_node_handler.param<double>("d_gain", ch1.d_gain, 0);
 	local_node_handler.param<double>("i_max",ch1.i_max,50);
+	local_node_handler.param<int>("anti_windup_percent",ch1.anti_windup_percent,50);
 
 	local_node_handler.param<double>("/robot_max_velocity",ch1.max_velocity_mps,1.0);
 
@@ -57,7 +54,7 @@ hbl1650::hbl1650( )
 	ch1.ticks_to_meter = 1/tmp;
 
 	local_node_handler.param<double>("mps_to_rpm",ch1.mps_to_rpm,5); //TODO: not used??
-	ch1.time_stamp.last_deadman_received = ros::Time::now();
+	ch1.last_deadman_received = ros::Time::now();
 	ch1.velocity = 0;
 	ch1.regulator.set_params(ch1.p_gain , ch1.i_gain , ch1.d_gain ,ch1.i_max , ch1.roboteq_max);
 
@@ -68,14 +65,12 @@ hbl1650::hbl1650( )
 	local_node_handler.param<bool>("closed_loop_operation", closed_loop_operation, false);
 
 	// Setup publishers
-	propulsion_module_status_publisher = local_node_handler.advertise<msgs::PropulsionModuleStatus>( propulsion_module_status_topic,10 );
 	setSerialPub( local_node_handler.advertise<msgs::serial>( serial_tx_topic,10 ));
 	setEncoderCh1Pub( local_node_handler.advertise<msgs::IntStamped>( encoder_ch1_topic, 10));
 	setPowerCh1Pub( local_node_handler.advertise<msgs::IntStamped>( power_ch1_topic, 10));
 	setStatusPub( local_node_handler.advertise<msgs::StringStamped>( status_topic, 10));
 	ch1.setStatusPub( local_node_handler.advertise<msgs::StringStamped>( status_topic, 10));
 	ch1.setVelPub(local_node_handler.advertise<std_msgs::Float64>( velocity_topic, 10));
-	ch1.setPropulsionFeedbackPub( local_node_handler.advertise<msgs::PropulsionModuleFeedback>( propulsion_module_feedback_topic, 10));
 	setTemperaturePub( local_node_handler.advertise<msgs::StringStamped>( temperature_topic, 10));
 
 	// Set up subscribers
@@ -104,8 +99,8 @@ void hbl1650::spin(void)
 void hbl1650::updateStatus(void)
 {
 	// Update time based status variables.
-	status.deadman_pressed = ((ros::Time::now() - ch1.time_stamp.last_deadman_received) < max_time_diff);
-	status.cmd_vel_publishing = ( (ros::Time::now() - ch1.time_stamp.last_twist_received) < max_time_diff);
+	status.deadman_pressed = ((ros::Time::now() - ch1.last_deadman_received) < max_time_diff);
+	status.cmd_vel_publishing = ( (ros::Time::now() - ch1.last_twist_received) < max_time_diff);
 	status.responding = ((ros::Time::now() - last_serial_msg) < max_time_diff);
 }
 

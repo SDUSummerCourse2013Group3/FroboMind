@@ -2,7 +2,10 @@
 <param name="use_sim_time" value="true"/>
 
 	<group ns="fmSim">
-		<node pkg="stage" name="stage_simulator" type="stageros" args="$(find sdu_sc_mech_row_demo)/conf/stage/simple.world"></node>
+		<node pkg="stage" name="stage_simulator" type="stageros" args="$(find sdu_sc_mech_row_demo)/conf/stage/simple.world">
+			<remap from="/fmSim/base_scan" to="/fmInformation/laser_row"/>
+			<remap from="/fmSim/odom" to="/fmKnowledge/encoder_odom"/>
+		</node>
 	</group>
 
 </launch>

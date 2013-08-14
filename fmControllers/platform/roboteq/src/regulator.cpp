@@ -17,7 +17,7 @@ double Regulator::output_from_input( double setpoint , double input , double per
 	double error = setpoint - input;
 
 	// Calculate integrator
-	integrator += error * period * i;
+	integrator += error * period;
 
 	// Implement anti wind up
 	if(integrator > i_max)
@@ -26,10 +26,10 @@ double Regulator::output_from_input( double setpoint , double input , double per
 		integrator = -i_max;
 
 	// Calculate differentiator
-	double differentiator = ( previous - input ) / period;
+	double differentiator = previous - error;
 
 	// Calculate output
-	double output = (error * p) + (integrator) - (differentiator * d);
+	double output = (error * p) + ((integrator ) * i) + ((differentiator / period)* d);
 
 	// Implement output max
 	if(output > out_max)
@@ -38,6 +38,6 @@ double Regulator::output_from_input( double setpoint , double input , double per
 		output = -out_max;
 
 	// Upkeep
-	previous = input;
+	previous = error;
 	return output;
 }

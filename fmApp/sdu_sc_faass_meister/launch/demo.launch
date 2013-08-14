@@ -2,13 +2,23 @@
 -->
 
 <launch>
+
+	<arg name="sim" default="false"/>
+	<param name="use_sim_time" value="true" if="$(arg sim)" />
 	<!-- Armadillo IV parameters --> 
 	<param name="robot_max_velocity" value="0.6"/>
 	<!-- param name="diff_steer_wheel_radius" value="0.159"/ --> <!-- specified directly as parameters to differential_odometry -->
 	<!-- param name="diff_steer_wheel_ticks_per_rev" value="625"/--> <!-- specified directly as parameters to differential_odometry -->
 	<param name="diff_steer_wheel_distance" value="3.175"/>
-
-	<group ns="fmSensors">
+	
+	<group ns="transforms">
+		<node pkg="tf" type="static_transform_publisher" name="imu_link_broadcaster" args="0 0.0 0.8 0 0 0 base_footprint imu_link 20"/>
+		<node pkg="tf" type="static_transform_publisher" name="base_link_broadcaster" args="0 0 0 0 0 0 base_footprint base_link 20"/>
+		<node pkg="tf" type="static_transform_publisher" name="laser_row_link_broadcaster" args="0.0 0 0.0 0 0 0 base_footprint laser_row_link 20"/>
+		<node pkg="tf" type="static_transform_publisher" name="laser_surface_link_broadcaster" args="0.1 0.0 1.5 3.1415 0 0 base_footprint laser_surface_link 20"/>
+	</group>
+	
+	<group ns="fmSensors" unless="$(arg sim)">
 	
 		<!-- extract data from messages transmitted by the VectorNav VN-100 IMU -->
 		<node pkg="vectornav_vn100" name="imu_node"  type="vectornav_vn100_node" output="screen" respawn="true">
@@ -20,17 +30,44 @@
 			<param name="covariance_y" value="0.001"/>
 			<param name="covariance_z" value="0.001"/>
 		 </node>
+		 
+		 <node name="LaserScanner_LMS111" pkg="sick_lms111" type="sick_lms111_node">
+			<param name="host" value="10.0.42.75" />
+			<param name="topic_id" value="/fmInformation/laser_row" />
+			<param name="frame_id" value="/laser_row_link" />
+		</node>
 	</group>
 	
-	<group>
+	<group ns="fmProcessors">
+		<node name="RowExtractorNode" pkg="row_extractor" type="row_extractor_node" output="screen">
+			<param name="loopRate" value="10" />
+			<param name="debug" value="true" />
+			<param name="synchronous" value="true" />
+			
+			<param name="rowTopic" value="row_msg" />
+			<param name="scanTopic" value="/fmInformation/laser_row" />
+			<param name="scanLink" value="/laser_row_link" />
+		
+			<param name="timeLimit" value="1000" />
+		
+			<param name="preprocessor/active" value="true" />
+			<param name="preprocessor/minimumClearZoneDistance" value="0.5" />
+			<param name="preprocessor/maximumClearZoneDistance" value="5" />
+			
+			<param name="ransac/numberOfRansacTries" value="20" />
+			<param name="ransac/numberOfPointsToAcceptLine" value="50" />
+			<param name="ransac/distanceFromLineThreshold" value="0.2" />
+			<param name="ransac/minumumRowLength" value="0.5" />
+		</node>
+		
 		<!-- calculate odometry based on encoders and IMU yaw axis orientation -->
-		<node pkg="differential_odometry" name="differential_odometry" type="differential_odometry_node" output="screen" >
+		<node pkg="differential_odometry" name="differential_odometry" type="differential_odometry_node" output="screen" unless="$(arg sim)" >
 			<param name="enc_left_sub" value="/fmInformation/enc_left" />
 			<param name="enc_right_sub" value="/fmInformation/enc_right" />
 			<param name="imu_sub" value="/fmInformation/imu" />
 			<param name="odom_pub" value="/fmKnowledge/encoder_odom" />
 			<param name="odom_estimate_frame" value="/odom_combined" />
-			<param name="vehicle_frame" value="base_footprint" />
+			<param name="vehicle_frame" value="base_link" />
 			<param name="encoder_output" value="absolute" />
 			<param name="ticks_per_meter_left" value="-620" />
 			<param name="ticks_per_meter_right" value="-620" />
@@ -59,7 +96,7 @@
 		
 	</group>
 
-	<group ns="fmControllers">
+	<group ns="fmControllers" unless="$(arg sim)">
 		<node pkg="differential_ifk" name="differential_driver" type="differential_ifk_node" output="screen" >
 			<param name="hl_subscriber_topic" value="/fmSignals/cmd_vel"/>
 			<param name="ll_publisher_topic_left" value="/fmSignals/cmd_vel_left"/>
@@ -105,7 +142,7 @@
 		</node>
 	</group>
 
-	<group ns="fmLib">
+	<group ns="fmLib" unless="$(arg sim)">
 		<!-- Wiimote interface -->
 		<node pkg="wiimote" type="wiimote_node.py" name="wiimote" respawn="true">
 			<!-- param name="fixed_wiimote_address" value="00:1F:32:B3:A2:F3"/ -->	<!-- Kjelds private -->

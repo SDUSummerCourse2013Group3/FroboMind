@@ -62,14 +62,14 @@ include_directories(include
 
 ## Declare a cpp library
  add_library(roboteq
-   src/roboteq.cpp src/channel.cpp src/hbl2350.cpp src/hbl1650.cpp src/regulator.cpp src/filter/IRR.cpp src/filter/sliding_window.cpp
+   src/roboteq.cpp src/channel.cpp src/hbl2350.cpp src/hbl1650.cpp src/regulator.cpp src/filter/IRR.cpp
  )
 
 ## Declare a cpp executable
 # add_executable(roboteq_node src/roboteq_node.cpp)
 
 ## Add dependencies to the executable
- add_dependencies(roboteq ${PROJECT_NAME} msgs_gencpp)
+ add_dependencies(roboteq ${PROJECT_NAME})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(roboteq_node
