@@ -72,7 +72,8 @@ Extractors::Output Extractors::RowExtractor::update (Input in)
 	this->input = in;
 
 	this->preProcessor();
-	this->ransacProcessor();
+	//this->ransacProcessor();
+	this->rowProcessor();
 
 	return this->output;
 }
@@ -108,7 +109,7 @@ void Extractors::RowExtractor::preProcessor (void)
 void Extractors::RowExtractor::rowProcessor (void)
 {
 	//	Variables
-	const bool debug = true;
+	const bool debug = false;
 	const double lowerBoundPercentage = 0.1;
 	double totalSizeOfCloud = (double)this->preProcessedData.size();
 	double percentageLeft = 1.0;
@@ -129,20 +130,34 @@ void Extractors::RowExtractor::rowProcessor (void)
 	}
 
 	//	Process row(s) and finalize output
+	int tempCount = 0;
+	double meanOrientation;
+
 	for (int i = 0; i < this->output.rows.size(); i++)
 	{
 		this->output.rowFound |= this->output.rows[i].rowFound;
 
 		if (this->output.rows[i].rowFound)
 		{
-			if (debug)
+			meanOrientation += this->output.orientation;
+			tempCount++;
 		}
+	}
+
+	if (tempCount)
+	{
+		meanOrientation /= (double)tempCount;
+		this->output.orientation = meanOrientation;
+	}
+	else
+	{
+
 	}
 }
 
 Extractors::Row Extractors::RowExtractor::ransacProcessor (void)
 {
-	const bool debug = true;
+	const bool debug = false;
 
 	//	Setup empty row
 	Row row;
@@ -386,4 +401,9 @@ Extractors::Row Extractors::RowExtractor::ransacProcessor (void)
 	if (debug) printf("=========================================\n Ransac processing ended\n\n\n");
 
 	return row;
+}
+
+double Extractors::RowExtractor::giveMeNan (void)
+{
+	return std::numeric_limits<double>::quiet_NaN();
 }

@@ -98,10 +98,8 @@ void RowExtractorNode::makeItSpin()
 		//	Update (if asynchronous behavior have been selected)
 		if (!this->synchronous)
 		{
-			//this->reOutput = this->rowExtractor.oldUpdate(this->reInput);
 			this->reOutput = this->rowExtractor.update(this->reInput);
 		}
-
 
 		if (this->debug)
 		{
@@ -139,7 +137,6 @@ void RowExtractorNode::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr&
 
 		if (this->synchronous)
 		{
-			//this->reOutput = this->rowExtractor.oldUpdate(this->reInput);
 			this->reOutput = this->rowExtractor.update(this->reInput);
 		}
 
@@ -154,22 +151,22 @@ void RowExtractorNode::updateDebugMarker (void)
 {
 	if (this->reOutput.rowFound)
 	{
-		this->marker.pose.position.x = this->reOutput.center.x;
-		this->marker.pose.position.y = this->reOutput.center.y;
-
-		this->marker.pose.orientation = tf::createQuaternionMsgFromYaw(this->reOutput.orientation);
-
-		this->marker.scale.x = this->reOutput.length;
-		this->marker.scale.y = 2 * this->reParameters.ransacProcessor.distanceFromLineThreshold;
+//		this->marker.pose.position.x = this->reOutput.center.x;
+//		this->marker.pose.position.y = this->reOutput.center.y;
+//
+//		this->marker.pose.orientation = tf::createQuaternionMsgFromYaw(this->reOutput.orientation);
+//
+//		this->marker.scale.x = this->reOutput.length;
+//		this->marker.scale.y = 2 * this->reParameters.ransacProcessor.distanceFromLineThreshold;
 	}
 	else
 	{
-		this->marker.pose.position.x = 0.0;
-		this->marker.pose.position.y = 0.0;
-
-		this->marker.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
-
-		this->marker.scale.x = 0.0;
-		this->marker.scale.y = 0.0;
+//		this->marker.pose.position.x = 0.0;
+//		this->marker.pose.position.y = 0.0;
+//
+//		this->marker.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
+//
+//		this->marker.scale.x = 0.0;
+//		this->marker.scale.y = 0.0;
 	}
 }

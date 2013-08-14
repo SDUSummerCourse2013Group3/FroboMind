@@ -89,6 +89,8 @@ namespace Extractors
 
 		Output update (Input in);
 
+		double giveMeNan (void);
+
 	private:
 		Input input;
 		Output output;
