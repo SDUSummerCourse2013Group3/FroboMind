@@ -67,17 +67,17 @@ void Extractors::RowExtractor::setParameters (Parameters par)
 	this->systemParameters = par;
 }
 
-Extractors::Output Extractors::RowExtractor::oldUpdate (Input in)
+Extractors::Output Extractors::RowExtractor::update (Input in)
 {
 	this->input = in;
 
-	this->oldPreProcess();
-	this->oldRansacProcess();
+	this->preProcessor();
+	this->ransacProcessor();
 
 	return this->output;
 }
 
-void Extractors::RowExtractor::oldPreProcess (void)
+void Extractors::RowExtractor::preProcessor (void)
 {
 	//	Copy data from input cloud to pre-processed cloud
 	this->preProcessedData = this->input.pointCloud;
@@ -105,333 +105,52 @@ void Extractors::RowExtractor::oldPreProcess (void)
 	}
 }
 
-void Extractors::RowExtractor::oldRansacProcess (void)
+void Extractors::RowExtractor::rowProcessor (void)
 {
-	//	Seed randomizer
-	srand(time(0));
-
 	//	Variables
-	int i = 0, pointCounter, bestCount = 0, randomPoints[2];
-	PointT lookingAt[2], pointsOfInterest[2], directionVector, orthogonalVector, helpVector, projectionVector, lineVector, p;
-	double dotProduct, length, projectionLength;
+	const bool debug = true;
+	const double lowerBoundPercentage = 0.1;
+	double totalSizeOfCloud = (double)this->preProcessedData.size();
+	double percentageLeft = 1.0;
+	Row ransacOutput;
 
-	//	Algorithm
-	if (this->preProcessedData.size())
+	//	Clear output
+	this->output.rows.clear();
+	this->output.rowFound = false;
+
+	//	Find row(s) in point cloud with ransac
+	while (percentageLeft > lowerBoundPercentage)
 	{
-		while (i < this->systemParameters.ransacProcessor.numberOfRansacTries)
+		ransacOutput = ransacProcessor();
+
+		this->output.rows.push_back(ransacOutput);
+
+		percentageLeft = (double)this->preProcessedData.size() / totalSizeOfCloud;
+	}
+
+	//	Process row(s) and finalize output
+	for (int i = 0; i < this->output.rows.size(); i++)
+	{
+		this->output.rowFound |= this->output.rows[i].rowFound;
+
+		if (this->output.rows[i].rowFound)
 		{
-			//	Select two points in cloud randomly
-			randomPoints[0] = rand() % this->preProcessedData.size();
-			randomPoints[1] = rand() % this->preProcessedData.size();
-
-			lookingAt[0] = this->preProcessedData.at(randomPoints[0]);
-			lookingAt[1] = this->preProcessedData.at(randomPoints[1]);
-
-			//	Calculate direction from two randomly selected points
-			directionVector.x = lookingAt[1].x - lookingAt[0].x;
-			directionVector.y = lookingAt[1].y - lookingAt[0].y;
-
-			//	Calculate orthogonal vector on direction
-			orthogonalVector.x = - directionVector.y;
-			orthogonalVector.y = directionVector.x;
-
-			//	Reset point counter
-			pointCounter = 0;
-
-			//	Check distance to line to each point in cloud
-			for (int j = 0; j < this->preProcessedData.size(); j++)
-			{
-				//	Get point
-				p = this->preProcessedData.at(j);
-
-				//	Make help vector for projection
-				helpVector.x = p.x - lookingAt[0].x;
-				helpVector.y = p.y - lookingAt[0].y;
-
-				//	Make projection of helpVector onto orthogonalVector
-				dotProduct = orthogonalVector.x * helpVector.x + orthogonalVector.y * helpVector.y;
-				length = std::sqrt(std::pow(orthogonalVector.x, 2) + std::pow(orthogonalVector.y, 2));
-
-				projectionVector.x = dotProduct / std::pow(length, 2) * orthogonalVector.x;
-				projectionVector.y = dotProduct / std::pow(length, 2) * orthogonalVector.y;
-
-				//	Calculate length of projection and decide if it is an inlier
-				projectionLength = std::sqrt(std::pow(projectionVector.x, 2) + std::pow(projectionVector.y, 2));
-
-				if (projectionLength < this->systemParameters.ransacProcessor.distanceFromLineThreshold)
-				{
-					pointCounter++;
-				}
-			}
-
-			if (pointCounter > bestCount)
-			{
-				bestCount = pointCounter;
-				pointsOfInterest[0] = lookingAt[0];
-				pointsOfInterest[1] = lookingAt[1];
-			}
-
-			//	Add one try
-			i++;
+			if (debug)
 		}
-	}
-
-	//	Output
-	if (bestCount > this->systemParameters.ransacProcessor.numberOfPointsToAcceptLine)
-	{
-		PointT line, center;
-		line.x = pointsOfInterest[1].x - pointsOfInterest[0].x;
-		line.y = pointsOfInterest[1].y - pointsOfInterest[0].y;
-		center.x = pointsOfInterest[0].x + line.x / 2;
-		center.y = pointsOfInterest[0].y + line.y / 2;
-
-		double lineLength, lineOrientation;
-		lineLength = std::sqrt(std::pow(line.x, 2) + std::pow(line.y, 2));
-		lineOrientation = std::atan2(line.y, line.x);
-
-		this->output.rowFound = true;
-		this->output.length = lineLength;
-		this->output.orientation = lineOrientation;
-		this->output.center = center;
-
-		//ROS_INFO("Line found with %d inliers ... ", bestCount);
-	}
-	else
-	{
-		double nan = std::numeric_limits<double>::quiet_NaN();
-
-		this->output.rowFound = false;
-		this->output.length = nan;
-		this->output.orientation = nan;
-		this->output.center = PointT();
-
-		//ROS_INFO("No line was found ... ");
 	}
 }
 
-Extractors::Output Extractors::RowExtractor::update (Input in)
-{
-	this->input = in;
-
-	this->preProcessor();
-	this->ransacProcessor();
-
-	return this->output;
-}
-
-void Extractors::RowExtractor::preProcessor (void)
-{
-	this->oldPreProcess();
-}
-
-void Extractors::RowExtractor::rowProcessor (PointT point, double orientation)
-{
-
-}
-
-void Extractors::RowExtractor::ransacProcessor2 (void)
-{
-	printf("Ransac processing ...");
-
-	//	Seed randomizer
-	srand(time(0));
-
-	//	Variables
-	int i = 0, randomPoints[2];
-	PointT lookingAt[2], pointsOfInterest[2], directionVector, orthogonalVector, helpVector, projectionVector, lineVector, p;
-	double dotProduct, length, projectionLength, rowLength;
-	pcl::PointCloud<PointT> inliers = pcl::PointCloud<PointT>(), inliersOfInterest = pcl::PointCloud<PointT>();
-	std::list<double> pointDistribution, bestPointDistribution;
-
-	double alpha, beta;
-	double inliersPercentage, variance;
-
-	//	Algorithm
-	if (this->preProcessedData.size())
-	{
-		while (i < this->systemParameters.ransacProcessor.numberOfRansacTries)
-		{
- 			//	Select two points in cloud randomly ad check if distance between points are big enough
-			int pointSelectCounter = 0;
-			do
-			{
-				randomPoints[0] = rand() % this->preProcessedData.size();
-				randomPoints[1] = rand() % this->preProcessedData.size();
-
-				lookingAt[0] = this->preProcessedData.at(randomPoints[0]);
-				lookingAt[1] = this->preProcessedData.at(randomPoints[1]);
-
-				//	Calculate direction from two randomly selected points
-				directionVector.x = lookingAt[1].x - lookingAt[0].x;
-				directionVector.y = lookingAt[1].y - lookingAt[0].y;
-
-				rowLength = sqrt(pow(directionVector.x, 2) + pow(directionVector.y, 2));
-
-				pointSelectCounter++;
-			} while (rowLength > this->systemParameters.ransacProcessor.minimumRowLength || pointSelectCounter > 9);
-
-			//	Calculate orthogonal vector on direction
-			orthogonalVector.x = - directionVector.y;
-			orthogonalVector.y = directionVector.x;
-
-			//	Reset point counter and inliers vector
-			inliers = pcl::PointCloud<PointT>();
-
-			//	Check distance to line to each point in cloud
-			for (int j = 0; j < this->preProcessedData.size(); j++)
-			{
-				//	Get point
-				p = this->preProcessedData.at(j);
-
-				//	Make help vector for projection
-				helpVector.x = p.x - lookingAt[0].x;
-				helpVector.y = p.y - lookingAt[0].y;
-
-				//	Make projection of helpVector onto orthogonalVector
-				dotProduct = orthogonalVector.x * helpVector.x + orthogonalVector.y * helpVector.y;
-				length = std::sqrt(std::pow(orthogonalVector.x, 2) + std::pow(orthogonalVector.y, 2));
-
-				projectionVector.x = dotProduct / std::pow(length, 2) * orthogonalVector.x;
-				projectionVector.y = dotProduct / std::pow(length, 2) * orthogonalVector.y;
-
-				//	Calculate length of projection and decide if it is an inlier
-				projectionLength = std::sqrt(std::pow(projectionVector.x, 2) + std::pow(projectionVector.y, 2));
-
-				if (projectionLength < this->systemParameters.ransacProcessor.distanceFromLineThreshold)
-				{
-					inliers.push_back(p);
-
-					//	Reuse dotproduct and length variable, for projection of helpvector onto direction vector
-					dotProduct = directionVector.x * helpVector.x + directionVector.y * helpVector.y;
-					length = std::sqrt(std::pow(directionVector.x, 2) + std::pow(directionVector.y, 2));
-
-					projectionVector.x = dotProduct / std::pow(length, 2) * directionVector.x;
-					projectionVector.y = dotProduct / std::pow(length, 2) * directionVector.y;
-
-					projectionLength = std::sqrt(std::pow(projectionVector.x, 2) + std::pow(projectionVector.y, 2));
-
-					if (dotProduct >= 0 && projectionLength <= length)
-						pointDistribution.push_back(projectionLength);
-				}
-			}
-
-			if (inliers.size() > inliersOfInterest.size())
-			{
-				inliersOfInterest = inliers;
-				bestPointDistribution = pointDistribution;
-				pointsOfInterest[0] = lookingAt[0];
-				pointsOfInterest[1] = lookingAt[1];
-			}
-
-			//	Add one try
-			i++;
-		}
-
-		//	Test row quality
-		bool isRowQualityOkay = false;
-		if (inliersOfInterest.size())
-		{
-			//	Calculate the percentage of inliers to line compared with the overall number of points
-			inliersPercentage = (double)inliersOfInterest.size() / (double)this->preProcessedData.size();
-
-			bestPointDistribution.sort();
-			std::list<double> weights;
-
-			double numberOfPoints = (double)bestPointDistribution.size();
-			double weight = 1. / numberOfPoints;
-			double cumulativeWeight = 0.0;
-
-			for (std::list<double>::iterator it = bestPointDistribution.begin(); it != bestPointDistribution.end(); ++it)
-			{
-				cumulativeWeight += weight;
-				weights.push_back(cumulativeWeight);
-			}
-
-			// Check distribution
-			double sumX = 0, sumY = 0, sumXY = 0, sumSquareX = 0;
-			double meanX, meanY, meanXY, meanSquareX;
-
-			for (std::list<double>::iterator itx = bestPointDistribution.begin(), ity = weights.begin(); itx != bestPointDistribution.end(); ++itx, ++ity)
-			{
-				sumX += *itx;
-				sumY += *ity;
-				sumXY += (*itx) * (*ity);
-				sumSquareX += pow(*itx, 2);
-			}
-
-			meanX = sumX / numberOfPoints;
-			meanY = sumY / numberOfPoints;
-			meanXY = sumXY / numberOfPoints;
-			meanSquareX = sumSquareX / numberOfPoints;
-
-			//	Calculate linear regression parameters
-			alpha = (meanXY - meanX * meanY) / (meanSquareX - pow(meanX, 2));
-			beta = meanY - alpha * meanX;
-
-			//	Calculate variance of residuals
-			//std::list<double> residuals;
-			double residual, sumRes = 0, sumResSquared = 0;
-
-			for (std::list<double>::iterator itx = bestPointDistribution.begin(), ity = weights.begin(); ity != weights.end(); ++itx, ++ity)
-			{
-				residual = *ity - (alpha * (*itx) + beta);
-
-				sumRes += residual;
-				sumResSquared += pow(residual, 2);
-			}
-
-			variance = (sumResSquared - pow(sumRes, 2)) / numberOfPoints;
-
-			printf("Variance of residuals: %f", variance);
-		}
-
-		//	Output
-		if (true)
-		{
-			printf(" Alpha: %f\n Beta: %f\n Variance: %f\n", alpha, beta, variance);
-		}
-		else
-		{
-
-		}
-	}
-	else
-	{
-		printf("No points received by the algorithm ...");
-	}
-
-//	//	Output
-//	if (bestCount > this->systemParameters.ransacProcessor.numberOfPointsToAcceptLine)
-//	{
-//		PointT line, center;
-//		line.x = pointsOfInterest[1].x - pointsOfInterest[0].x;
-//		line.y = pointsOfInterest[1].y - pointsOfInterest[0].y;
-//		center.x = pointsOfInterest[0].x + line.x / 2;
-//		center.y = pointsOfInterest[0].y + line.y / 2;
-//
-//		double lineLength, lineOrientation;
-//		lineLength = std::sqrt(std::pow(line.x, 2) + std::pow(line.y, 2));
-//		lineOrientation = std::atan2(line.y, line.x);
-//
-//		this->output.rowFound = true;
-//		this->output.length = lineLength;
-//		this->output.orientation = lineOrientation;
-//		this->output.center = center;
-//	}
-//	else
-//	{
-//		double nan = std::numeric_limits<double>::quiet_NaN();
-//
-//		this->output.rowFound = false;
-//		this->output.length = nan;
-//		this->output.orientation = nan;
-//		this->output.center = PointT();
-//	}
-}
-
-void Extractors::RowExtractor::ransacProcessor (void)
+Extractors::Row Extractors::RowExtractor::ransacProcessor (void)
 {
 	const bool debug = true;
+
+	//	Setup empty row
+	Row row;
+	row.rowFound = false;
+	row.pointInRow = PointT();
+	row.lengthToRow = 0.0;
+	row.orientation = 0.0;
+	row.varianceOfRes = 0.0;
 
 	if (debug) printf(" Ransac processing:\n=========================================\n");
 
@@ -452,6 +171,7 @@ void Extractors::RowExtractor::ransacProcessor (void)
 		PointT pointsOfInterest[2];				//	Points selected for further analysis
 		PointT lineDirectionVector;				//	Direction vector for line (vector between points of interest)
 		double lineLength;						//	Length of direction vector
+		double lineRotation;					//	Line rotation
 		bool lineFound;							//	Did ransac select points far enough away from each other
 		bool rowFound = false;					//	Row found?
 
@@ -475,6 +195,9 @@ void Extractors::RowExtractor::ransacProcessor (void)
 		std::list<double> weights;				//	Store weights from xProjDistribution
 		std::list<double> residuals;			//	Store residuals from linear regression on CDF of points along the line
 
+		std::vector<int> inlierIndecies;		//	Storing indecies of inlier points
+		inlierIndecies = std::vector<int>();
+
 		double inliersPercentage;				//	Percentage of inliers compared to the total number of points in the pre-processed cloud
 
 		//	Find possible row
@@ -482,6 +205,7 @@ void Extractors::RowExtractor::ransacProcessor (void)
 		{
 			ransacTryCounter++;
 
+			inlierIndecies.clear();
 			ransacBestCount = 0;
 			randomTryCounter = 0;
 			lineFound = false;
@@ -508,8 +232,6 @@ void Extractors::RowExtractor::ransacProcessor (void)
 			//	If proper line is found continue further analysis
 			if (lineFound)
 			{
-				//if (debug) printf(" Line was found for further analysis ... \n");
-
 				ransacInlierCounter = 0;
 
 				xProjTestDist.clear();
@@ -544,11 +266,13 @@ void Extractors::RowExtractor::ransacProcessor (void)
 					xProjLen = sqrt(pow(xProjection.x, 2) + pow(xProjection.y, 2));
 					yProjLen = sqrt(pow(yProjection.x, 2) + pow(yProjection.y, 2));
 
-					//if (debug) printf(" Y-Projection length: %f\n", yProjLen);
-
+					//	If it is an inlier
 					if (yProjLen < this->systemParameters.ransacProcessor.distanceFromLineThreshold)
 					{
 						ransacInlierCounter++;
+
+						//	Add index to inlier index
+						inlierIndecies.push_back(i);
 
 						//	If projection onto direction vector is in bound add length to distribution
 						if (xDotProduct > 0 && xProjLen < lineLength)
@@ -569,12 +293,24 @@ void Extractors::RowExtractor::ransacProcessor (void)
 		//	If any "best" line was found, analyse quality
 		if (xProjDistribution.size())
 		{
-			if (debug) printf(" Some best fit was made!\n");
-
 			//	Calculate the percentage of inliers to line compared with the overall number of points
 			inliersPercentage = (double)xProjDistribution.size() / (double)this->preProcessedData.size();
 
 			xProjDistribution.sort();
+
+			if (debug)
+			{
+				printf(" Number of inliers: %d\n", (int)inlierIndecies.size());
+				printf(" Before reduction of point cloud: %d\n", (int)this->preProcessedData.size());
+			}
+
+			//	Remove inliers from pre-processed cloud
+			for (int index = inlierIndecies.size() - 1; index >= 0; index--)
+			{
+				this->preProcessedData.erase(preProcessedData.begin() + inlierIndecies[index]);
+			}
+
+			if (debug) printf(" After reduction of point cloud: %d\n", (int)this->preProcessedData.size());
 
 			double numberOfPoints = (double)xProjDistribution.size();
 			double weight = 1. / numberOfPoints;
@@ -620,8 +356,22 @@ void Extractors::RowExtractor::ransacProcessor (void)
 			}
 
 			variance = (sumResSquared - pow(sumRes, 2)) / numberOfPoints;
+			lineRotation = std::atan2(lineDirectionVector.y, lineDirectionVector.x);
 
-			printf(" Variance of residuals: %f", variance);
+			//	Setup output
+			row.rowFound = true;
+			row.pointInRow = lookingAt[0];
+			row.lengthToRow = lineLength;
+			row.orientation = lineRotation;
+			row.varianceOfRes = variance;
+
+			if (debug)
+			{
+				printf(" Point in line: (%f, %f)\n", lookingAt[0].x, lookingAt[0].y);
+				printf(" Line length: %f\n", lineLength);
+				printf(" Line rotation: %f\n", lineRotation);
+				printf(" Variance of residuals: %f\n", variance);
+			}
 		}
 		else
 		{
@@ -634,4 +384,6 @@ void Extractors::RowExtractor::ransacProcessor (void)
 	}
 
 	if (debug) printf("=========================================\n Ransac processing ended\n\n\n");
+
+	return row;
 }

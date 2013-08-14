@@ -29,9 +29,11 @@ namespace Extractors
 
 	struct Row
 	{
+		bool rowFound;
 		PointT pointInRow;
 		double orientation;
 		double lengthToRow;
+		double varianceOfRes;
 		CovarianceMatrix covariance;
 	};
 
@@ -85,8 +87,6 @@ namespace Extractors
 
 		pcl::PointCloud<PointT> getPreProcessedCloud (void);
 
-		Output oldUpdate (Input in);
-
 		Output update (Input in);
 
 	private:
@@ -102,9 +102,8 @@ namespace Extractors
 		void oldRansacProcess (void);
 
 		void preProcessor (void);
-		void rowProcessor (PointT point, double orientation);
-		void ransacProcessor (void);
-		void ransacProcessor2 (void);
+		void rowProcessor (void);
+		Row ransacProcessor (void);
 	};
 }
 
