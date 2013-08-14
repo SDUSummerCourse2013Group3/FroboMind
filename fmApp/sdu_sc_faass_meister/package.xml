@@ -42,7 +42,6 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>actionlib</build_depend>
   <build_depend>actionlib_msgs</build_depend>
-  <build_depend>executvie_smach</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>msgs</build_depend>
   <build_depend>nav_msgs</build_depend>
@@ -51,7 +50,6 @@
   <build_depend>sensor_msgs</build_depend>
   <run_depend>actionlib</run_depend>
   <run_depend>actionlib_msgs</run_depend>
-  <run_depend>executvie_smach</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>msgs</run_depend>
   <run_depend>nav_msgs</run_depend>

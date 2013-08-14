@@ -4,7 +4,7 @@ project(sdu_sc_faass_meister)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs executvie_smach geometry_msgs msgs nav_msgs roscpp rospy sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs geometry_msgs msgs nav_msgs roscpp rospy sensor_msgs)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
