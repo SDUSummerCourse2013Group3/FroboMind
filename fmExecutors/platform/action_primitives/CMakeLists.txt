@@ -50,7 +50,7 @@ add_action_files(DIRECTORY action FILES make_turn.action navigate_row.action)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES action_primitives
-#  CATKIN_DEPENDS actionlib actionlib_msgs dynamic_reconfigure fmControllers msgs nav_msgs rospy tf visualization_msgs
+  CATKIN_DEPENDS actionlib actionlib_msgs
 #  DEPENDS system_lib
 )
 
