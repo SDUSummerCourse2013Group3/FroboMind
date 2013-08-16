@@ -2,7 +2,7 @@
 	<node name="StaticLaserScannerTransform" pkg="tf" type="static_transform_publisher" args="0 0 0 3.14 0 0 /laser_lms111 /laser_link 100" />
 
 	<node name="LaserScanner_LMS111" pkg="sick_lms111" type="sick_lms111_node">
-		<param name="host" value="192.168.0.10" />
+		<param name="host" value="10.0.42.75" />
 		<param name="topic_id" value="/laser_lms111" />
 		<param name="frame_id" value="/laser_lms111" />
 	</node>
