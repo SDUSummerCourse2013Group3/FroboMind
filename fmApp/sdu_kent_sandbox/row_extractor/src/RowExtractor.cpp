@@ -151,7 +151,7 @@ void Extractors::RowExtractor::rowProcessor (void)
 	}
 	else
 	{
-
+		//	Setup empty output
 	}
 }
 
