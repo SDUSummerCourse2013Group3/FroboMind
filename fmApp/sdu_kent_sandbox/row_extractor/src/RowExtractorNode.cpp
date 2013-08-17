@@ -114,6 +114,7 @@ void RowExtractorNode::makeItSpin()
 
 		//	Setup row output
 		//	Extract info from vector<row>
+		this->rowExtraction();
 
 		//	Publish row data
 		this->output.rowPublisher.publish(this->output.rowMessage);
@@ -139,7 +140,6 @@ void RowExtractorNode::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr&
 		{
 			this->reOutput = this->rowExtractor.update(this->reInput);
 		}
-
 	}
 	catch (tf::TransformException& e)
 	{
@@ -147,26 +147,34 @@ void RowExtractorNode::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr&
 	}
 }
 
+void RowExtractorNode::rowExtraction (void)
+{
+	if (this->reOutput.rowFound)
+	{
+
+	}
+}
+
 void RowExtractorNode::updateDebugMarker (void)
 {
 	if (this->reOutput.rowFound)
 	{
-//		this->marker.pose.position.x = this->reOutput.center.x;
-//		this->marker.pose.position.y = this->reOutput.center.y;
-//
-//		this->marker.pose.orientation = tf::createQuaternionMsgFromYaw(this->reOutput.orientation);
-//
-//		this->marker.scale.x = this->reOutput.length;
-//		this->marker.scale.y = 2 * this->reParameters.ransacProcessor.distanceFromLineThreshold;
+		this->marker.pose.position.x = 0;//this->reOutput.center.x;
+		this->marker.pose.position.y = 0;//this->reOutput.center.y;
+
+		this->marker.pose.orientation = tf::createQuaternionMsgFromYaw(this->reOutput.orientation);
+
+		this->marker.scale.x = 1.0;
+		this->marker.scale.y = 2 * this->reParameters.ransacProcessor.distanceFromLineThreshold;
 	}
 	else
 	{
-//		this->marker.pose.position.x = 0.0;
-//		this->marker.pose.position.y = 0.0;
-//
-//		this->marker.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
-//
-//		this->marker.scale.x = 0.0;
-//		this->marker.scale.y = 0.0;
+		this->marker.pose.position.x = 0.0;
+		this->marker.pose.position.y = 0.0;
+
+		this->marker.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
+
+		this->marker.scale.x = 0.0;
+		this->marker.scale.y = 0.0;
 	}
 }

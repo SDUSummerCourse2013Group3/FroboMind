@@ -146,12 +146,19 @@ void Extractors::RowExtractor::rowProcessor (void)
 
 	if (tempCount)
 	{
+		this->output.rowFound = true;
 		meanOrientation /= (double)tempCount;
 		this->output.orientation = meanOrientation;
+		this->output.length = 0.0;
+		this->output.center.x = 0;
+		this->output.center.y = 0;
 	}
 	else
 	{
-		//	Setup empty output
+		this->output.rowFound = false;
+		this->output.orientation = giveMeNan();
+		this->output.length = giveMeNan();
+		this->output.center = PointT();
 	}
 }
 

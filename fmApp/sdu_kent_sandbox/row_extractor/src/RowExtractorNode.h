@@ -69,6 +69,7 @@ class RowExtractorNode
 	//	Callback
 	void laserScanCallback(const sensor_msgs::LaserScan::ConstPtr& data);
 
+	void rowExtraction (void);
 	void updateDebugMarker (void);
 
 public:

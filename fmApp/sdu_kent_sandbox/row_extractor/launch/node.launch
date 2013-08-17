@@ -1,8 +1,8 @@
 <launch>
 	<node name="RowExtractorNode" pkg="row_extractor" type="row_extractor_node" output="screen">
-		<param name="loopRate" value="100" />
+		<param name="loopRate" value="50" />
 		<param name="debug" value="true" />
-		<param name="synchronous" value="false" />
+		<param name="synchronous" value="true" />
 		
 		<param name="rowTopic" value="row_msg" />
 		<param name="scanTopic" value="/fmSensors/laser_msg" />
