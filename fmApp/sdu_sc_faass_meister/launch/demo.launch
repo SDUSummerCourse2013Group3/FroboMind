@@ -145,7 +145,8 @@
 	<group ns="fmLib" unless="$(arg sim)">
 		<!-- Wiimote interface -->
 		<node pkg="wiimote" type="wiimote_node.py" name="wiimote" respawn="true">
-			<param name="fixed_wiimote_address" value="00:1F:32:B3:A2:F3"/>	<!-- Kjelds private -->
+			<!-- param name="fixed_wiimote_address" value="00:1F:32:B3:A2:F3"/ -->	<!-- Kjelds private -->
+			<param name="fixed_wiimote_address" value="00:19:1D:73:C2:EF"/>
 		
 		</node >		
 
