@@ -5,6 +5,7 @@
  *      Author: kent
  */
 
+//	Redundant comment
 #include "RowExtractorNode.h"
 
 int main (int argc, char** argv)
@@ -98,7 +99,8 @@ void RowExtractorNode::makeItSpin()
 		//	Update (if asynchronous behavior have been selected)
 		if (!this->synchronous)
 		{
-			this->reOutput = this->rowExtractor.update(this->reInput);
+			//this->reOutput = this->rowExtractor.update(this->reInput);
+			this->rowExtraction();
 		}
 
 		if (this->debug)
@@ -111,10 +113,6 @@ void RowExtractorNode::makeItSpin()
 			this->marker.header.stamp = ros::Time::now();
 			this->markerPublisher.publish(this->marker);
 		}
-
-		//	Setup row output
-		//	Extract info from vector<row>
-		this->rowExtraction();
 
 		//	Publish row data
 		this->output.rowPublisher.publish(this->output.rowMessage);
@@ -138,7 +136,8 @@ void RowExtractorNode::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr&
 
 		if (this->synchronous)
 		{
-			this->reOutput = this->rowExtractor.update(this->reInput);
+			//this->reOutput = this->rowExtractor.update(this->reInput);
+			this->rowExtraction();
 		}
 	}
 	catch (tf::TransformException& e)
@@ -149,32 +148,40 @@ void RowExtractorNode::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr&
 
 void RowExtractorNode::rowExtraction (void)
 {
-	if (this->reOutput.rowFound)
-	{
+	static int sequeceNumber = 0;
 
+	if (this->debug)
+	{
+		printf(" Row Extraction: (%d)\n", sequeceNumber);
+		printf("============================================\n");
+		printf(" Row found: %d\n", this->reOutput.rowFound);
+		printf(" Rows in list: %d\n", (int)this->reOutput.rows.size());
+		printf("============================================\n\n");
 	}
+
+	sequeceNumber++;
 }
 
 void RowExtractorNode::updateDebugMarker (void)
 {
-	if (this->reOutput.rowFound)
-	{
-		this->marker.pose.position.x = 0;//this->reOutput.center.x;
-		this->marker.pose.position.y = 0;//this->reOutput.center.y;
-
-		this->marker.pose.orientation = tf::createQuaternionMsgFromYaw(this->reOutput.orientation);
-
-		this->marker.scale.x = 1.0;
-		this->marker.scale.y = 2 * this->reParameters.ransacProcessor.distanceFromLineThreshold;
-	}
-	else
-	{
-		this->marker.pose.position.x = 0.0;
-		this->marker.pose.position.y = 0.0;
-
-		this->marker.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
-
-		this->marker.scale.x = 0.0;
-		this->marker.scale.y = 0.0;
-	}
+//	if (this->reOutput.rowFound)
+//	{
+//		this->marker.pose.position.x = 0;//this->reOutput.center.x;
+//		this->marker.pose.position.y = 0;//this->reOutput.center.y;
+//
+//		this->marker.pose.orientation = tf::createQuaternionMsgFromYaw(this->reOutput.orientation);
+//
+//		this->marker.scale.x = 1.0;
+//		this->marker.scale.y = 2 * this->reParameters.ransacProcessor.distanceFromLineThreshold;
+//	}
+//	else
+//	{
+//		this->marker.pose.position.x = 0.0;
+//		this->marker.pose.position.y = 0.0;
+//
+//		this->marker.pose.orientation = tf::createQuaternionMsgFromYaw(0.0);
+//
+//		this->marker.scale.x = 0.0;
+//		this->marker.scale.y = 0.0;
+//	}
 }

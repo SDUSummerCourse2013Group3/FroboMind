@@ -5,6 +5,7 @@
  *      Author: kent
  */
 
+//	Redundant comment
 #ifndef ROWEXTRACTORNODE_H_
 #define ROWEXTRACTORNODE_H_
 

@@ -5,6 +5,7 @@
  *      Author: kent
  */
 
+//	Redundant comment
 #include "RowExtractor.h"
 
 Extractors::RowExtractor::RowExtractor()
