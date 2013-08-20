@@ -1,0 +1,172 @@
+<launch>
+
+<group ns="fmCSP">
+    <node pkg="can_socketcan" name="CAN0" type="can_socketcan_node">
+        <param name="device" value="can0" />
+        <param name="publisher_topic" value="/fmData/can0_rx" />
+        <param name="subscriber_topic" value="/fmData/can0_tx" />
+    </node>
+
+	<node pkg="serial_string" name="USB0" type="serial_string_node">
+        <param name="publisher_topic" value="/fmData/imu_rx" />	 
+        <param name="subscriber_topic" value="/fmData/imu_tx" />	
+        <param name="device" value="/dev/ttyUSB0" />	
+        <param name="baudrate" value="115200" />
+	</node>
+</group>
+
+<group ns="fmControllers">
+	<node pkg="ackermann_ifk" name="ackermann_driver" type="ackermann_ifk_node" >
+		<param name="twist_subscriber_topic" value="/fmSignals/cmd_vel"/>
+		<param name="steering_angle_publisher_topic" value="/fmSignals/steering_angle_cmd"/>
+		<param name="cmd_vel_publisher_topic" value="/fmSignals/cmd_vel_linear"/>
+		<param name="axle_distance_front_rear" value="1.5"/>
+	</node>
+	
+	<node pkg="sdu_sc_faass_meister" name="vel_conv_node" type="vel_conv_node.py"/>
+
+</group>
+
+<group ns="fmSensors">
+
+    <node pkg="leine_linde_encoder" name="encoder_angle" type="leine_linde_encoder_node">
+        <param name="encoder_id" value="33"/>
+        <param name="publish_rate" value="20"/>
+        <param name="poll_interval_ms" value="20"/>
+        <param name="publisher_topic" value="/fmData/can0_tx" />
+        <param name="subscriber_topic" value="/fmData/can0_rx" />
+        <param name="enc_publisher_topic" value="/fmInformation/encoder_angle" />
+        <param name="invert_output" value="false"/>
+        <param name="use_current_position_as_offset" value="false"></param>
+    </node>
+    
+    <node pkg="leine_linde_encoder" name="rear_encoder_left" type="leine_linde_encoder_node">
+        <param name="encoder_id" value="11"/>
+        <param name="publish_rate" value="20"/>
+        <param name="poll_interval_ms" value="20"/>
+        <param name="publisher_topic" value="/fmData/can0_tx" />
+        <param name="subscriber_topic" value="/fmData/can0_rx" />
+        <param name="enc_publisher_topic" value="/fmInformation/encoder_left" />
+        <param name="invert_output" value="true"/>
+        <param name="use_current_position_as_offset" value="true"></param>
+    </node>
+    
+    <node pkg="leine_linde_encoder" name="rear_encoder_right" type="leine_linde_encoder_node">
+        <param name="encoder_id" value="22"/>
+        <param name="publish_rate" value="20"/>
+        <param name="poll_interval_ms" value="20"/>
+        <param name="publisher_topic" value="/fmData/can0_tx" />
+        <param name="subscriber_topic" value="/fmData/can0_rx" />
+        <param name="enc_publisher_topic" value="/fmInformation/encoder_right" />
+        <param name="invert_output" value="false"/>
+        <param name="use_current_position_as_offset" value="true"></param>
+    </node>
+    
+    <node pkg="topcon_aes25" name="topcon_aes_25" type="topcon_aes25_node" output="screen">
+    	<param name="controller_period" value="0.02"/>
+    	<param name="publisher_topic" value="/fmData/can0_tx"/>
+    	<param name="subscriber_topic" value="/fmData/can0_rx"/>
+    	<param name="steering_angle_cmd" value="/fmSignals/steering_angle_cmd"/>
+	</node>
+	
+	<node pkg="vectornav_vn100" name="IMU" type="vectornav_vn100_node" output="screen"> 
+	    <param name="subscribe_topic_id" value="/fmData/com0_rx" />
+		<param name="publish_topic_id" value="/fmInformation/IMU" />
+		<param name="frame_id" value="imu_link" />
+		<param name="cov_x" value="0.001"/>
+		<param name="cov_y" value="0.001"/>
+		<param name="cov_z" value="0.001"/>
+	</node>
+	
+</group>
+
+<node pkg="usb4_driver" type="usb4_driver_node" name="USB4_driver" output="screen">
+    <param name="USB4_Device" value = "0"/>
+    <param name="Update_Freq" value = "20"/>
+    <param name="Encoder0_Enable" value = "0"/>
+    <param name="Encoder0_CountsPerRotation" value="65535"/>
+    <param name="Encoder0_QuadratureMode" value="0"/>
+    <param name="Encoder0_CounterMode" value="3"/>
+    <param name="Encoder0_ResetOnIndex" value="0"/>
+    <param name="Encoder0_TickToValue" value="1.0"/>
+    <param name="Encoder0_Topic" value = "/usb4_encoder0"/>
+
+    <param name="Encoder1_Enable" value = "0"/>
+    <param name="Encoder1_CountsPerRotation" value="65535"/>
+    <param name="Encoder1_QuadratureMode" value="0"/>
+    <param name="Encoder1_CounterMode" value="3"/>
+    <param name="Encoder1_ResetOnIndex" value="1"/>
+    <param name="Encoder1_TickToValue" value="1.0"/>
+    <param name="Encoder1_Topic" value = "/usb4_encoder1"/>
+
+    <param name="Encoder2_Enable" value = "0"/>
+    <param name="Encoder2_CountsPerRotation" value="65535"/>
+    <param name="Encoder2_QuadratureMode" value="0"/>
+    <param name="Encoder2_CounterMode" value="3"/>
+    <param name="Encoder2_ResetOnIndex" value="1"/>
+    <param name="Encoder2_TickToValue" value="1.0"/>
+    <param name="Encoder2_Topic" value = "/usb4_encoder2"/>
+
+    <param name="Encoder3_Enable" value = "0"/>
+    <param name="Encoder3_CountsPerRotation" value="65535"/>
+    <param name="Encoder3_QuadratureMode" value="0"/>
+    <param name="Encoder3_CounterMode" value="3"/>
+    <param name="Encoder3_ResetOnIndex" value="1"/>
+    <param name="Encoder3_TickToValue" value="1.0"/>
+    <param name="Encoder3_Topic" value = "/usb4_encoder3"/>
+
+    <param name="DigitalInput0_Enable" value = "1"/>
+    <param name="DigitalInput1_Enable" value = "0"/>
+    <param name="DigitalInput2_Enable" value = "0"/>
+    <param name="DigitalInput3_Enable" value = "0"/>
+    <param name="DigitalInput4_Enable" value = "0"/>
+    <param name="DigitalInput5_Enable" value = "0"/>
+    <param name="DigitalInput6_Enable" value = "0"/>
+    <param name="DigitalInput7_Enable" value = "0"/>
+    <param name="DigitalInput0_Topic" value = "/usb4_di0"/>
+    <param name="DigitalInput1_Topic" value = "/usb4_di1"/>
+    <param name="DigitalInput2_Topic" value = "/usb4_di2"/>
+    <param name="DigitalInput3_Topic" value = "/usb4_di3"/>
+    <param name="DigitalInput4_Topic" value = "/usb4_di4"/>
+    <param name="DigitalInput5_Topic" value = "/usb4_di5"/>
+    <param name="DigitalInput6_Topic" value = "/usb4_di6"/>
+    <param name="DigitalInput7_Topic" value = "/usb4_di7"/>
+
+    <param name="AnalogInput0_Enable" value = "0"/>
+    <param name="AnalogInput1_Enable" value = "0"/>
+    <param name="AnalogInput2_Enable" value = "0"/>
+    <param name="AnalogInput3_Enable" value = "0"/>
+    <param name="AnalogInput0_Topic" value = "/usb4_adc0"/>
+    <param name="AnalogInput1_Topic" value = "/usb4_adc1"/>
+    <param name="AnalogInput2_Topic" value = "/usb4_adc2"/>
+    <param name="AnalogInput3_Topic" value = "/usb4_adc3"/>
+
+    <param name="DigitalOutput0_Enable" value = "1"/>
+    <param name="DigitalOutput1_Enable" value = "1"/>
+    <param name="DigitalOutput2_Enable" value = "0"/>
+    <param name="DigitalOutput3_Enable" value = "0"/>
+    <param name="DigitalOutput4_Enable" value = "0"/>
+    <param name="DigitalOutput5_Enable" value = "0"/>
+    <param name="DigitalOutput6_Enable" value = "0"/>
+    <param name="DigitalOutput7_Enable" value = "0"/>
+    <param name="DigitalOutput0_Topic" value = "/usb4_do0"/>
+    <param name="DigitalOutput1_Topic" value = "/usb4_do1"/>
+    <param name="DigitalOutput2_Topic" value = "/usb4_do2"/>
+    <param name="DigitalOutput3_Topic" value = "/usb4_do3"/>
+    <param name="DigitalOutput4_Topic" value = "/usb4_do4"/>
+    <param name="DigitalOutput5_Topic" value = "/usb4_do5"/>
+    <param name="DigitalOutput6_Topic" value = "/usb4_do6"/>
+    <param name="DigitalOutput7_Topic" value = "/usb4_do7"/>
+
+    <param name="AnalogOutput0_Enable" value = "1"/>
+    <param name="AnalogOutput1_Enable" value = "0"/>
+    <param name="AnalogOutput2_Enable" value = "0"/>
+    <param name="AnalogOutput3_Enable" value = "0"/>
+    <param name="AnalogOutput0_Topic" value = "/usb4_dac0"/>
+    <param name="AnalogOutput1_Topic" value = "/usb4_dac1"/>
+    <param name="AnalogOutput2_Topic" value = "/usb4_dac2"/>
+    <param name="AnalogOutput3_Topic" value = "/usb4_dac3"/>
+  </node>
+
+
+</launch>

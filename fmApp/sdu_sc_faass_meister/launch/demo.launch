@@ -5,11 +5,12 @@
 
 	<arg name="sim" default="false"/>
 	<param name="use_sim_time" value="true" if="$(arg sim)" />
-	<!-- Armadillo IV parameters --> 
-	<param name="robot_max_velocity" value="0.6"/>
-	<!-- param name="diff_steer_wheel_radius" value="0.159"/ --> <!-- specified directly as parameters to differential_odometry -->
-	<!-- param name="diff_steer_wheel_ticks_per_rev" value="625"/--> <!-- specified directly as parameters to differential_odometry -->
-	<param name="diff_steer_wheel_distance" value="3.175"/>
+	<param name="diff_steer_wheel_radius" value="0.233"/>
+	<param name="diff_steer_wheel_ticks_per_rev" value="8192"/>
+	<param name="diff_steer_wheel_distance" value="0.8"/>
+	<!-- 0.00017867 m per tick -->
+
+	<include file="$(find sdu_sc_faass_meister)/launch/asubot-base.launch" unless="$(arg sim)"/>
 	
 	<group ns="transforms">
 		<node pkg="tf" type="static_transform_publisher" name="imu_link_broadcaster" args="0 0.0 0.8 0 0 0 base_footprint imu_link 20"/>
@@ -39,26 +40,6 @@
 	</group>
 	
 	<group ns="fmProcessors">
-		<node name="RowExtractorNode" pkg="row_extractor" type="row_extractor_node" output="screen">
-			<param name="loopRate" value="10" />
-			<param name="debug" value="true" />
-			<param name="synchronous" value="true" />
-			
-			<param name="rowTopic" value="row_msg" />
-			<param name="scanTopic" value="/fmInformation/laser_row" />
-			<param name="scanLink" value="/laser_row_link" />
-		
-			<param name="timeLimit" value="1000" />
-		
-			<param name="preprocessor/active" value="true" />
-			<param name="preprocessor/minimumClearZoneDistance" value="0.5" />
-			<param name="preprocessor/maximumClearZoneDistance" value="5" />
-			
-			<param name="ransac/numberOfRansacTries" value="20" />
-			<param name="ransac/numberOfPointsToAcceptLine" value="50" />
-			<param name="ransac/distanceFromLineThreshold" value="0.2" />
-			<param name="ransac/minumumRowLength" value="0.5" />
-		</node>
 		
 		<!-- calculate odometry based on encoders and IMU yaw axis orientation -->
 		<node pkg="differential_odometry" name="differential_odometry" type="differential_odometry_node" output="screen" unless="$(arg sim)" >
@@ -69,16 +50,16 @@
 			<param name="odom_estimate_frame" value="/odom_combined" />
 			<param name="vehicle_frame" value="base_link" />
 			<param name="encoder_output" value="absolute" />
-			<param name="ticks_per_meter_left" value="-620" />
-			<param name="ticks_per_meter_right" value="-620" />
-			<param name="max_ticks_per_update" value="200" />
+			<param name="ticks_per_meter_left" value="5595.696539952" />
+			<param name="ticks_per_meter_right" value="5595.696539952" />
+			<param name="max_ticks_per_update" value="10000" />
 			<param name="yaw_angle_source" value="imu_angular_velocity" />
 			<param name="imu_angular_velocity_yaw_axis" value="z" />
 		</node>
 	</group>
 
 	<group ns="fmDecisionMakers">
-		<node pkg="sdu_weeding_trial_2013" name="mission_control" type="simple_mission.py">
+		<node pkg="sdu_sc_faass_meister" name="mission_control" type="faas_row_mission.py">
     		<param name="deadman_topic" value="/fmSignals/deadman" />
 			<param name="cmd_vel_topic" value="/fmSignals/cmd_vel" />
             <param name="max_linear_velocity" value="0.7"/>
@@ -93,53 +74,15 @@
 	</group>
 
 	<group ns="fmExecutors">
-		
-	</group>
-
-	<group ns="fmControllers" unless="$(arg sim)">
-		<node pkg="differential_ifk" name="differential_driver" type="differential_ifk_node" output="screen" >
-			<param name="hl_subscriber_topic" value="/fmSignals/cmd_vel"/>
-			<param name="ll_publisher_topic_left" value="/fmSignals/cmd_vel_left"/>
-			<param name="ll_publisher_topic_right" value="/fmSignals/cmd_vel_right"/>
+		<node pkg="action_primitives" name="navigate_row" type="navigate_in_row_simple.py">
 		</node>
 		
-		<node pkg="sdu_armadillo4" type="sdu_armadillo4_node" name="roboteq_left" output="screen">
-			<param name="cmd_vel_ch1_topic" value="/fmSignals/cmd_vel_left"/>
-			<param name="serial_rx_topic" value="/fmData/serial_comm_left_rx" />
-			<param name="serial_tx_topic" value="/fmData/serial_comm_left_tx" />
-			<param name="deadman_topic" value="/fmSignals/deadman"/>
-			<param name="encoder_ch1_topic" value="/fmInformation/encoder_left"/>
-			<param name="power_ch1_topic" value="/fmData/power_left"/>
-			<param name="status_topic" value="/fmData/status"/>
-			<param name="velocity_topic" value="/fmData/velocity_left"/>
-			<param name="ticks_per_meter" value="620"/>
-			<param name="p_gain" value="20"/>
-			<param name="i_gain" value="1"/>
-			<param name="d_gain" value="0"/>
-			<param name="i_max" value="1"/>
-			<param name="max_controller_command" value="120" />
-			<param name="anti_windup_percent" value="50"/>
-			<param name="closed_loop_operation" value="true"/>
+		<node pkg="action_primitives" name="drive_forward" type="drive_forward.py">
 		</node>
-	
-		<node pkg="sdu_armadillo4" type="sdu_armadillo4_node" name="roboteq_right" output="screen">
-			<param name="cmd_vel_ch1_topic" value="/fmSignals/cmd_vel_right"/>
-			<param name="serial_rx_topic" value="/fmData/serial_comm_right_rx" />
-			<param name="serial_tx_topic" value="/fmData/serial_comm_right_tx" />
-			<param name="deadman_topic" value="/fmSignals/deadman"/>
-			<param name="encoder_ch1_topic" value="/fmInformation/encoder_right"/>
-			<param name="power_ch1_topic" value="/fmData/power_right"/>
-			<param name="status_topic" value="/fmData/status"/>
-			<param name="velocity_topic" value="/fmData/velocity_right"/>
-			<param name="ticks_per_meter" value="620"/>
-			<param name="p_gain" value="20"/>
-			<param name="i_gain" value="1"/>
-			<param name="d_gain" value="0"/>
-			<param name="i_max" value="1"/>
-			<param name="max_controller_command" value="120" />
-			<param name="anti_windup_percent" value="50"/>
-			<param name="closed_loop_operation" value="true"/>
+		
+		<node pkg="action_primitives" name="make_turn" type="make_turn.py">
 		</node>
+		
 	</group>
 
 	<group ns="fmLib" unless="$(arg sim)">
@@ -149,43 +92,6 @@
 			<param name="fixed_wiimote_address" value="00:19:1D:73:C2:EF"/>
 		
 		</node >		
-
-		<!-- serial communication with the Armadillo IV robot -->
-		<node pkg="serial_string" type="serial_string_node" name="serial_comm_left" output="screen">
-			<param name="publisher_topic" value="/fmData/serial_comm_left_rx" />
-			<param name="subscriber_topic" value="/fmData/serial_comm_left_tx" />
-			<param name="device" value="/dev/ttyS0" />
-			<param name="baudrate" value="115200" />
-			<param name="termination_character" value="13" />
-		</node>
-
-		<node pkg="serial_string" type="serial_string_node" name="serial_comm_right" output="screen">
-			<param name="publisher_topic" value="/fmData/serial_comm_right_rx" />
-			<param name="subscriber_topic" value="/fmData/serial_comm_right_tx" />
-			<param name="device" value="/dev/ttyS1" />
-			<param name="baudrate" value="115200" />
-			<param name="termination_character" value="13" />
-		</node>
-		
-		<node pkg="serial_string" type="serial_string_node" name="serial_comm_imu" output="screen">
-			<param name="publisher_topic" value="/fmData/imu_rx" />
-			<param name="subscriber_topic" value="/fmData/imu_tx" />
-			<param name="device" value="/dev/ttyUSB0" />
-			<param name="baudrate" value="115200" />
-			<param name="termination_character" value="10" />
-		</node>
-		
-		<!-- launch conversion node to convert IntStamped messages to encoder messages -->
-		<!-- (this is a temporary fix until we get all encoder messages changed to IntStamped) -->
-		<node pkg="int_stamped_to_encoder" name="enc_conversion" type="encoder_converter.py">
-			<param name="left_sub" value="/fmInformation/encoder_left" />
-			<param name="right_sub" value="/fmInformation/encoder_right" />
-			<param name="left_pub" value="/fmInformation/enc_left" />
-			<param name="right_pub" value="/fmInformation/enc_right" />
-		</node>
-
 	</group>
 
-	<!-- enables communication with the implement -->
-	<node name="rosbridge_websocket" pkg="rosbridge_server" type="rosbridge_websocket" output="screen" />
 </launch>
