@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #/****************************************************************************
 # FroboMind template_cpp_node
 # Copyright (c) 2011-2013, author Kent Stark Olsen kent.stark.olsen@gmail.com
@@ -26,9 +27,6 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #****************************************************************************/
 
-#!/usr/bin/env python
-import roslib; 
-roslib.load_manifest("fmExecutors")
 import rospy
 
 import actionlib
@@ -38,7 +36,7 @@ import tf
 from tf import TransformListener, TransformBroadcaster
 from geometry_msgs.msg import Twist
 
-from fmExecutors.msg import *
+from action_primitives.msg import drive_forwardAction, drive_forwardFeedback, drive_forwardGoal
 
 
 

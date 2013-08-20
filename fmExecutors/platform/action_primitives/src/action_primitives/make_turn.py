@@ -26,9 +26,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #****************************************************************************/
-
-#import roslib; 
-#roslib.load_manifest("action_primitives")
 import rospy
 
 import actionlib
@@ -37,7 +34,7 @@ import tf
 
 from tf import TransformListener, TransformBroadcaster
 from geometry_msgs.msg import TwistStamped
-from action_primitives.msg import *
+from action_primitives.msg import make_turnAction, make_turnFeedback, make_turnGoal
 
 
 

@@ -1,18 +1,19 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(action_primitives)
+project(row_behaviours)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-#find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs dynamic_reconfigure msgs nav_msgs rospy tf visualization_msgs)
-find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs msgs rospy tf geometry_msgs)
+find_package(catkin REQUIRED COMPONENTS actionlib rospy smach_ros)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+
 ## Uncomment this if the package has a setup.py. This macro ensures
-## modules and scripts declared therein get installed
- catkin_python_setup()
+## modules and global scripts declared therein get installed
+## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
+catkin_python_setup()
 
 #######################################
 ## Declare ROS messages and services ##
@@ -32,25 +33,25 @@ find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs msgs rospy tf g
 #   Service2.srv
 # )
 
-add_action_files(DIRECTORY action FILES make_turn.action navigate_row.action drive_forward.action)
-
 ## Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
-   actionlib_msgs std_msgs
- )
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+# )
 
-###################################################
-## Declare things to be passed to other projects ##
-###################################################
-
+###################################
+## catkin specific configuration ##
+###################################
+## The catkin_package macro generates cmake config files for your package
+## Declare things to be passed to dependent projects
+## INCLUDE_DIRS: uncomment this if you package contains header files
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES action_primitives
-  CATKIN_DEPENDS actionlib actionlib_msgs
+#  LIBRARIES row_behaviours
+#  CATKIN_DEPENDS actionlib rospy smach_ros
 #  DEPENDS system_lib
 )
 
@@ -59,21 +60,26 @@ catkin_package(
 ###########
 
 ## Specify additional locations of header files
-# include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+## Your package locations should be listed before other locations
+# include_directories(include)
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+)
 
 ## Declare a cpp library
-# add_library(action_primitives
-#   src/${PROJECT_NAME}/action_primitives.cpp
+# add_library(row_behaviours
+#   src/${PROJECT_NAME}/row_behaviours.cpp
 # )
 
 ## Declare a cpp executable
-# add_executable(action_primitives_node src/action_primitives_node.cpp)
+# add_executable(row_behaviours_node src/row_behaviours_node.cpp)
 
-## Add dependencies to the executable
-# add_dependencies(action_primitives_node ${PROJECT_NAME} actionlib_msgs_gencpp msgs_gencpp geometry_msgs_gencpp)
+## Add cmake target dependencies of the executable/library
+## as an example, message headers may need to be generated before nodes
+# add_dependencies(row_behaviours_node row_behaviours_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(action_primitives_node
+# target_link_libraries(row_behaviours_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -81,15 +87,18 @@ catkin_package(
 ## Install ##
 #############
 
+# all install targets should use catkin DESTINATION variables
+# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
+
 ## Mark executable scripts (Python etc.) for installation
-## not required for python when using catkin_python_setup()
- install(PROGRAMS
-   src/action_primitives/make_turn
-   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
- )
+## in contrast to setup.py, you can choose the destination
+# install(PROGRAMS
+#   scripts/my_python_script
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS action_primitives action_primitives_node
+# install(TARGETS row_behaviours row_behaviours_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -114,7 +123,7 @@ catkin_package(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_action_primitives.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_row_behaviours.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
