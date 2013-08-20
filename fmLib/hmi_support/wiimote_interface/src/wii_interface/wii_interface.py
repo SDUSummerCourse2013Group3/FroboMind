@@ -68,6 +68,7 @@ class WiiInterface():
         self.button_A_cb = self.no_callback_registered
         self.button_up_cb = self.no_callback_registered
         self.button_down_cb = self.no_callback_registered
+        self.button_home_cb = self.no_callback_registered
 
         # Get parameters
         self.reduced_range = rospy.get_param("~reduced_range",40) # Given in percent
@@ -110,6 +111,10 @@ class WiiInterface():
         rospy.loginfo("Callback registered on button Down")
         self.button_down_cb = cb
         
+    def register_callback_button_home(self,cb):
+        rospy.loginfo("Callback registered on button Home")
+        self.button_home_cb = cb
+        
     def onJoy(self,msg):
         """
             Callback method handling Joy messages
@@ -139,6 +144,8 @@ class WiiInterface():
             self.button_up_cb()
         if msg.buttons[9] == 1 :
             self.button_down_cb()
+        if msg.buttons[10] == 1:
+            self.button_home_cb()
             
         # Handle deadman button
         if msg.buttons[3] == 1 :
